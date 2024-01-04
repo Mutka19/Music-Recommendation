@@ -27,7 +27,14 @@ login_manager.login_view = "login"
 
 class Person(db.Model, UserMixin):
     id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=True, nullable=False)
+    username = db.Column(db.String(20), unique=True, nullable=False)
+    password = db.Column(db.String(32), unique=True, nullable=False)
+
+    def __repr__(self):
+        return "<User %r>" % self.username
+
+    def validate(self, password):
+        return self.password == password
 
 
 class Artist(db.Model, UserMixin):
@@ -36,70 +43,72 @@ class Artist(db.Model, UserMixin):
     artist = db.Column(db.String(300), unique=False, nullable=False)
     song = db.Column(db.String(300), unique=False, nullable=False)
 
-
-with app.app_context():
-    db.create_all()
-
+# with app.app_context():
+#     db.create_all()
 
 @login_manager.user_loader
 def load_user(user_id):
     return Person.query.get(int(user_id))
-
-
 @app.route("/")
-def send_to_signup():
-    return flask.render_template("sign_up.html")
-
-
-@app.route("/create", methods=["GET", "POST"])
-def create_user():
-    form_data = flask.request.form
-    username = form_data["username"]
-    person = Person(username=username)
-
-    exist = db.session.query(
-        exists().where(Person.username == person.username)
-    ).scalar()
-
-    if exist:
-        flask.flash("This username is already take please select a new one")
-        return flask.redirect(flask.url_for("send_to_signup"))
+def main():
+    if flask.session["username"] is None:
+        return flask.redirect("/signup")
     else:
-        db.session.add(person)
+        return flask.redirect("/main")
+
+@app.route("/signup", methods=["GET", "POST"])
+def signup():
+    if flask.request.method == "POST":
+        username = flask.request.form["username"]
+        password = flask.request.form["password"]
+
+        if Person.query.filter_by(username=username).first():
+            error_message = (
+                "This username already exists, please choose a different username!"
+            )
+            return flask.render_template("signup.html", error_message=error_message)
+
+        new_user = Person(username=username, password=password)
+
+        db.session.add(new_user)
         db.session.commit()
-        flask.flash("Account created")
-        return flask.redirect(flask.url_for("send_to_login"))
+        return flask.redirect("/login")
+    else:
+        return flask.render_template("signup.html")
 
+@app.route("/login", methods=["GET", "POST"])
+def login():
+    if flask.request.method == "POST":
+        username = flask.request.form["username"]
+        password = flask.request.form["password"]
+        print(username, password)
 
-@app.route("/login")
-def send_to_login():
+        user = Person.query.filter_by(username=username).first()
+        if user is not None and user.validate(password):
+            flask.session["user_id"] = user.id
+            flask.session["username"] = username
+            login_user(user)
+            return flask.redirect(flask.url_for("send_to_main"))
+        else:
+            error_message = "Invalid username or password"
+            return flask.render_template("login.html", error_message=error_message)
+
+    # Render login page
     return flask.render_template("login.html")
 
-
-@app.route("/check", methods=["GET", "POST"])
-def check_user():
-    form_data = flask.request.form
-    username = form_data["username"]
-    person = Person(username=username)
-
-    user = Person.query.filter_by(username=username).first()
-
-    exist = db.session.query(
-        exists().where(Person.username == person.username)
-    ).scalar()
-
-    if exist:
-        user.authenticated = True
-        login_user(user)
-        return flask.redirect(flask.url_for("send_to_main", user=str(person.username)))
-    else:
-        flask.flash("This username is incorrect please try again or create an account")
-        return flask.redirect(flask.url_for("send_to_login"))
-
-
-@app.route("/main/<user>", methods=["GET"])
+@app.route("/logout", methods=["GET", "POST"])
 @login_required
-def send_to_main(user):
+def logout():
+    logout_user()
+    flask.session.pop("user_id", None)
+    flask.session.pop("username", None)
+    flask.flash("Signed out")
+    return flask.redirect(flask.url_for("login"))
+
+
+@app.route("/main", methods=["GET"])
+@login_required
+def send_to_main():
     a = Artist.query.all()
 
     song_name = request.args.get("song_name")
@@ -107,7 +116,7 @@ def send_to_main(user):
     song_artist = request.args.get("song_artist")
 
     return flask.render_template(
-        "main.html", user=user, song_lists=a, song=song_name, artist=song_artist
+        "main.html", user=flask.session["username"], song_lists=a, song=song_name, artist=song_artist
     )
 
 
@@ -149,13 +158,4 @@ def music_database():
     db.session.commit()
     return flask.redirect(flask.url_for("send_to_main", user=user))
 
-
-@app.route("/logout", methods=["GET", "POST"])
-@login_required
-def logout():
-    logout_user()
-    flask.flash("Signed out")
-    return flask.redirect(flask.url_for("send_to_login"))
-
-
-# app.run()
+app.run(debug=True)
