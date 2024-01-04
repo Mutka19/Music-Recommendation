@@ -1,23 +1,29 @@
 <!DOCTYPE html>
-<html>
-    <head>    
-    </head>
-        <body>
-            {% with messages = get_flashed_messages()%}
-            {% if messages %}
-                {% for message in messages %}
-                    <b>{{ message }}</b>
-                {% endfor %}
-            {%endif%}   
-            {% endwith %}
-            <div>
-            <h1>Login Now!</h1>
-            <form method="POST" action="/check">
-                <input type="text" id="username" name="username" placeholder="Enter Username Here">
-                <button type="submit">login</button>
-            </form>
-            <p id="link"><a href="{{url_for('send_to_signup')}}">click to sign up</a></p>
-        </div>
-        
-        </body>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="{{ url_for('static', filename='login.css') }}" rel="stylesheet"/>
+    <title>Login</title>
+</head>
+<body>
+	<form method="POST" action="{{ url_for('login') }}">
+		<h2>Login</h2>
+        {% if error_message %}
+        <h4>{{error_message}}</h4>
+        {% else %}
+        <br>
+        {% endif %}
+		<div class="container">
+			<label for="uname"><b>Username</b></label>
+			<input type="text" placeholder="Enter Username" id="username" name="username" required>
+            <br>
+			<label for="psw"><b>Password</b></label>
+			<input type="password" placeholder="Enter Password" id="password" name="password" required>
+            <br>
+			<button type="submit">Login</button>
+		</div>
+	</form>
+</body>
 </html>
