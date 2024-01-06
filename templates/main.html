@@ -11,22 +11,30 @@
 </head>
 
 <body>
-    <h1>Welcome {{user}}</h1>
-    <h4>
+    <div class="main">
+        <h1>Welcome {{user}}!</h1>
         <form id="music" method="POST" action="/music-selection">
-            <label for="artist">Artists</label>
-            <input type="text" id="artist" name="artist" placeholder="select an artist">
-            <label for="track">Tracks</label>
-            <input type="text" id="track" name="track" placeholder="select an track">
+            <h2>Required Fields</h2>
+            <div class="requiredForms forms">
+                <div class="formItem">
+                    <label for="artist"></label>
+                    <input type="text" id="artist" name="artist" placeholder="Select an artist">
+                </div>
+                <div class="formItem">
+                    <label for="track"></label>
+                    <input type="text" id="track" name="track" placeholder="Select a track">
+                </div>
+            </div>
             <br><br>
-    </h4>
-    <h2>Pick >
-        <label for="genres">Genres</label>
-        <input type="text" id="genres" name="genres" placeholder="select an genres">
+            <h2>Optional Fields</h2>
+            <div class="optionalForms forms">
+                <div class="formItem">
+                    <label for="genres"></label>
+                    <input type="text" id="genres" name="genres" placeholder="Select a genre">
+                </div>
+            </div>
         <input type=hidden name="user" value="{{user}}">
-
-
-        <button type="submit">Submit</button>
+        <button id="submit" type="submit">Submit</button>
         </form>
         <h3>Recommend Songs
             {% if song != None%}
@@ -53,6 +61,7 @@
             {% endfor %}
         </h3>
         <a id='logout' href="{{url_for('logout')}}">Logout</a>
+    </div>
 </body>
 
 </html>
