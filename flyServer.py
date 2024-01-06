@@ -51,7 +51,7 @@ def load_user(user_id):
     return Person.query.get(int(user_id))
 @app.route("/")
 def main():
-    if flask.session["username"] is None:
+    if "username" in flask.session and flask.session["username"] is None:
         return flask.redirect("/signup")
     else:
         return flask.redirect("/main")
