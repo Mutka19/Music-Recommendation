@@ -50,11 +50,11 @@ class Artist(db.Model, UserMixin):
 def load_user(user_id):
     return Person.query.get(int(user_id))
 @app.route("/")
-def main():
+def home():
     if "username" in flask.session and flask.session["username"] is None:
         return flask.redirect("/signup")
     else:
-        return flask.redirect("/main")
+        return flask.redirect("/home")
 
 @app.route("/signup", methods=["GET", "POST"])
 def signup():
@@ -88,7 +88,7 @@ def login():
             flask.session["user_id"] = user.id
             flask.session["username"] = username
             login_user(user)
-            return flask.redirect(flask.url_for("send_to_main"))
+            return flask.redirect(flask.url_for("send_to_home"))
         else:
             error_message = "Invalid username or password"
             return flask.render_template("login.html", error_message=error_message)
@@ -106,9 +106,9 @@ def logout():
     return flask.redirect(flask.url_for("login"))
 
 
-@app.route("/main", methods=["GET"])
+@app.route("/home", methods=["GET"])
 @login_required
-def send_to_main():
+def send_to_home():
     a = Artist.query.all()
 
     song_name = request.args.get("song_name")
@@ -116,7 +116,7 @@ def send_to_main():
     song_artist = request.args.get("song_artist")
 
     return flask.render_template(
-        "main.html", user=flask.session["username"], song_lists=a, song=song_name, artist=song_artist
+        "home.html", user=flask.session["username"], song_lists=a, song=song_name, artist=song_artist
     )
 
 
@@ -140,7 +140,7 @@ def find_song():
 
     return flask.redirect(
         flask.url_for(
-            "send_to_main", user=user, song_name=song_name, song_artist=song_artist
+            "send_to_home", user=user, song_name=song_name, song_artist=song_artist
         )
     )  # sent to login to test
 
@@ -156,6 +156,6 @@ def music_database():
     db.session.add(artist_found)
 
     db.session.commit()
-    return flask.redirect(flask.url_for("send_to_main", user=user))
+    return flask.redirect(flask.url_for("send_to_home", user=user))
 
 app.run(debug=True)
