@@ -162,15 +162,19 @@ def find_song():
 
 @app.route("/music-database", methods=["GET", "POST"])
 def music_database():
+    # Get form data
     form_data = flask.request.form
     song = form_data["song_name"]
     artist = form_data["song_artist"]
     user = form_data["user"]
+
+    # Create artist object using form data
     artist_found = Artist(username=user, artist=artist, song=song)
 
+    # Save artist to database
     db.session.add(artist_found)
-
     db.session.commit()
+
     return flask.redirect(flask.url_for("send_to_home", user=user))
 
 app.run(debug=True)
