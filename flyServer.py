@@ -122,19 +122,34 @@ def send_to_home():
 
 @app.route("/music-selection", methods=["GET", "POST"])
 def find_song():
+    # Get form data
     form_data = flask.request.form
-    artist = form_data["artist"]
-    artist_list = [artist]
-    genres = form_data["genres"]
-    genres_list = [genres]
-    track = form_data["track"]
-    track_list = [track]
+    artist_string = form_data["artist"]
+    genre_string = form_data["genres"]
+    track_string = form_data["track"]
     user = form_data["user"]
 
+    # Separate artist string into list using comma delimiters
+    artist_list = artist_string.split(",")
+    if len(artist_string) == 0:
+        artist_list = []
+
+    # Separate genres string into list using comma delimiters
+    genres_list = genre_string.split(",")
+    if len(genre_string) == 0:
+        genres_list = []
+
+    # Separate track string into list using comma delimiters
+    track_list = track_string.split(",")
+    if len(track_string) == 0:
+        track_list = []
+
+    # Get recommendations using spotify recommendation api
     song = sp.get_recommendations(
         sp.request_auth(), artists=artist_list, genres=genres_list, tracks=track_list
     )["tracks"][0]
 
+    # Extract song name from JSON response
     song_name = song["name"]
     song_artist = song["artists"][0]["name"]
 
@@ -142,7 +157,7 @@ def find_song():
         flask.url_for(
             "send_to_home", user=user, song_name=song_name, song_artist=song_artist
         )
-    )  # sent to login to test
+    )
 
 
 @app.route("/music-database", methods=["GET", "POST"])
