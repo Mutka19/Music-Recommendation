@@ -1,13 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 
 <head>
+    <title>Music Discovery</title>
     <link rel="stylesheet" href='/static/song_display_style.css'>
-    <style>
-        .song-list {
-            list-style: none;
-        }
-    </style>
 </head>
 
 <body>
@@ -54,8 +50,6 @@
             {% if song_list.username == user%}
             <ul class="song-list">
                 <li>{{ song_list.song}} by {{song_list.artist}} </li>
-
-                <br>
             </ul>
             {% endif %}
             {% endfor %}
