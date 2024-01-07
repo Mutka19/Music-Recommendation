@@ -87,7 +87,7 @@ def get_recommendations(
 
     url = "https://api.spotify.com/v1/recommendations"
     headers = get_header(token)
-    query = f"?limit={limit}&market=ES&seed_artists={artists_string}&seed_genres={genres_string},country&seed_tracks={tracks_string}"
+    query = f"?limit={limit}&market=ES&seed_artists={artists_string}&seed_genres={genres_string}&seed_tracks={tracks_string}"
     query_url = url + query
 
     res = rq.get(query_url, headers=headers)
@@ -96,17 +96,3 @@ def get_recommendations(
         return None
     else:
         return json_res
-
-
-print(search_artist(request_auth(), "Michael Jackson")["id"])
-print(search_song(request_auth(), "Thriller")["id"])
-# print(search_artist(request_auth(), 'Michael Jackson')['id'])
-print(search_song(request_auth(), "Thriller")["id"])
-song = get_recommendations(
-    request_auth(),
-    artists=["Michael Jackson"],
-    genres=["pop", "rap"],
-    tracks=["gods plan"],
-)["tracks"][0]
-# print(song["name"])
-# print(song["artists"][0]["name"])
