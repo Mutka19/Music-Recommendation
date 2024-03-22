@@ -7,6 +7,8 @@ from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import exists
 import spotifyAPI as sp
 from repository.db_model import db
+from model.person import Person
+from model.song_record import SongRecord
 from flask_login import (
     UserMixin,
     login_user,
@@ -24,12 +26,6 @@ db.init_app(app)
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.login_view = "login"
-
-class Artist(db.Model, UserMixin):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(80), unique=False, nullable=False)
-    artist = db.Column(db.String(300), unique=False, nullable=False)
-    song = db.Column(db.String(300), unique=False, nullable=False)
 
 # with app.app_context():
 #     db.create_all()
@@ -97,7 +93,7 @@ def logout():
 @app.route("/home", methods=["GET"])
 @login_required
 def send_to_home():
-    a = Artist.query.all()
+    a = SongRecord.query.all()
 
     song_name = request.args.get("song_name")
 
@@ -157,7 +153,7 @@ def music_database():
     user = form_data["user"]
 
     # Create artist object using form data
-    artist_found = Artist(username=user, artist=artist, song=song)
+    artist_found = SongRecord(username=user, artist=artist, song=song)
 
     # Save artist to database
     db.session.add(artist_found)
