@@ -6,6 +6,7 @@ from random import randrange
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import exists
 import spotifyAPI as sp
+from repository.db_model import db
 from flask_login import (
     UserMixin,
     login_user,
@@ -18,7 +19,7 @@ from flask_login import (
 app = flask.Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
 app.secret_key = os.getenv("SECRET_KEY")
-db = SQLAlchemy(app)
+db.init_app(app)
 
 login_manager = LoginManager()
 login_manager.init_app(app)
