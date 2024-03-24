@@ -25,6 +25,7 @@ def find_song():
     if not data:
         return jsonify({"error": "No data provided"}), 400
 
+    # Get data from JSON and if none is present set equal to empty string
     artist_string = data.get("artist", "")
     genre_string = data.get("genres", "")
     track_string = data.get("tracks", "")
@@ -37,6 +38,10 @@ def find_song():
 
     # Separate track string into list using comma delimiters
     track_list = track_string.split(",") if len(track_string) > 0 else []
+
+    # Return error if too many arguments are used
+    if len(artist_list) + len(genres_list) + len(track_list) > 5:
+        return jsonify({"error": "Too many arguments, maximum number of arguments is 5"}), 400
 
     # Get recommendations using spotify recommendation api
     try:
