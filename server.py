@@ -133,4 +133,20 @@ def music_database():
     return jsonify({"Result": "Success"}), 201
 
 
+@app.route("/get-library", methods=["GET"])
+@jwt_required()
+def get_library():
+    # Get user identity
+    username = get_jwt_identity()
+
+    # Query for all songs that user has saved
+    songs = SongRecord.query.filter_by(username=username).all()
+
+    # If songs are found then return all songs
+    if songs:
+        return jsonify({"songs": songs}), 200
+    else:
+        return jsonify({"error": "No songs found"})
+
+
 app.run(debug=True)
