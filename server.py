@@ -1,8 +1,8 @@
 import flask
-from flask import request, jsonify
-import requests, json, os
-from dotenv import load_dotenv, find_dotenv
-import spotifyAPI as sp
+from flask import jsonify
+import os
+from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+import spotify_api_handler as sp
 from repository.db_model import db
 from model.person import Person
 from model.song_record import SongRecord
@@ -11,10 +11,61 @@ from model.song_record import SongRecord
 app = flask.Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = os.getenv("DATABASE_URL")
 app.secret_key = os.getenv("SECRET_KEY")
+app.config["JWT_SECRET_KEY"] = os.getenv("SECRET_KEY")
 db.init_app(app)
+jwt = JWTManager(app)
 
 # with app.app_context():
 #     db.create_all()
+
+
+@app.route("/login", methods=["POST"])
+def login():
+    # Get data as JSON
+    data = flask.request.get_json()
+
+    # Extract username and password from JSON
+    username = data.get("username")
+    password = data.get("password")
+
+    # Query for persons with matching username
+    person = Person.query.filter_by(username=username).first()
+
+    # Check if username and password match
+    if person and person.check_password(password):
+        access_token = create_access_token(identity=username)
+        return flask.jsonify(access_token=access_token), 200
+    else:
+        return flask.jsonify({"message": "Invalid username or password"}), 401
+
+
+@app.route("/signup", methods=["POST"])
+def signup():
+    # Get data as JSON
+    data = flask.request.get_json()
+
+    # Extract username and password from JSON
+    username = data.get("username")
+    password = data.get("password")
+
+    # Query for persons with matching username
+    person = Person.query.filter_by(username=username).first()
+
+    # Check if username is in use and password is not null
+    if not person and len(password) > 8:
+        # Create person object
+        person = Person(username=username)
+
+        # Use set_password
+        person.set_password(password=password)
+
+        # Stage person object in db and commit
+        db.session.add(person)
+        db.session.commit()
+
+        return flask.jsonify({"message": "Signup Successful"}), 200
+    else:
+        return flask.jsonify({"message": "Username is taken or password is too short"}), 401
 
 
 @app.route("/music-selection", methods=["GET", "POST"])
@@ -61,16 +112,17 @@ def find_song():
     return jsonify({"song_name": song_name, "song_artist": song_artist}), 200
 
 
-@app.route("/music-database", methods=["GET", "POST"])
+@app.route("/music-database", methods=["POST"])
+@jwt_required()
 def music_database():
     # Get JSON data
-    data = flask.request.form
+    data = flask.request.get_json()
     song = data.get("song_name")
     artist = data.get("song_artist")
-    user = data.get("user")
+    username = get_jwt_identity()
 
     # Create artist object using form data
-    liked_song = SongRecord(username=user, artist=artist, song=song)
+    liked_song = SongRecord(username=username, artist=artist, song=song)
 
     # Stage song
     db.session.add(liked_song)
