@@ -1,7 +1,12 @@
 import flask
 from flask import jsonify
 import os
-from flask_jwt_extended import JWTManager, create_access_token, jwt_required, get_jwt_identity
+from flask_jwt_extended import (
+    JWTManager,
+    create_access_token,
+    jwt_required,
+    get_jwt_identity,
+)
 import spotify_api_handler as sp
 from repository.db_model import db
 from model.person import Person
@@ -30,11 +35,10 @@ def login():
 
     # Query for persons with matching username
     person = Person.query.filter_by(username=username).first()
-
     # Check if username and password match
     if person and person.check_password(password):
-        access_token = create_access_token(identity=username)
-        return flask.jsonify(access_token=access_token), 200
+        token = create_access_token(identity=username)
+        return flask.jsonify({"token": token}), 200
     else:
         return flask.jsonify({"message": "Invalid username or password"}), 401
 
@@ -65,7 +69,10 @@ def signup():
 
         return flask.jsonify({"message": "Signup Successful"}), 200
     else:
-        return flask.jsonify({"message": "Username is taken or password is too short"}), 401
+        return (
+            flask.jsonify({"message": "Username is taken or password is too short"}),
+            401,
+        )
 
 
 @app.route("/music-selection", methods=["GET", "POST"])
@@ -77,7 +84,7 @@ def find_song():
         return jsonify({"error": "No data provided"}), 400
 
     # Get data from JSON and if none is present set equal to empty string
-    artist_string = data.get("artist", "")
+    artist_string = data.get("artists", "")
     genre_string = data.get("genres", "")
     track_string = data.get("tracks", "")
 
@@ -92,7 +99,10 @@ def find_song():
 
     # Return error if too many arguments are used
     if len(artist_list) + len(genres_list) + len(track_list) > 5:
-        return jsonify({"error": "Too many arguments, maximum number of arguments is 5"}), 400
+        return (
+            jsonify({"error": "Too many arguments, maximum number of arguments is 5"}),
+            400,
+        )
 
     # Get recommendations using spotify recommendation api
     try:
@@ -108,8 +118,20 @@ def find_song():
     # Extract song name from JSON response
     song_name = song["name"]
     song_artist = song["artists"][0]["name"]
+    album_name = song["album"]["name"]
+    release_date = song["album"]["release_date"][:4]
 
-    return jsonify({"song_name": song_name, "song_artist": song_artist}), 200
+    return (
+        jsonify(
+            {
+                "songName": song_name,
+                "songArtist": song_artist,
+                "albumName": album_name,
+                "releaseDate": release_date,
+            }
+        ),
+        200,
+    )
 
 
 @app.route("/music-database", methods=["POST"])
