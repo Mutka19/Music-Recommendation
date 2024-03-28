@@ -171,4 +171,4 @@ def get_library():
         return jsonify({"error": "No songs found"})
 
 
-app.run(debug=True)
+app.run(host="0.0.0.0", port=5000)
