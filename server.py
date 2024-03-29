@@ -134,13 +134,17 @@ def find_song():
     )
 
 
-@app.route("/music-database", methods=["POST"])
+@app.route("/save-music", methods=["POST"])
 @jwt_required()
 def music_database():
     # Get JSON data
     data = flask.request.get_json()
-    song = data.get("song_name")
-    artist = data.get("song_artist")
+    song = data.get("songName")
+    artist = data.get("songArtist")
+    album = data.get("albumName")
+    release_date = data.get("releaseDate")
+
+    # Get username from JWT
     username = get_jwt_identity()
 
     # Create artist object using form data
@@ -152,7 +156,7 @@ def music_database():
     # Commit song to database
     db.session.commit()
 
-    return jsonify({"Result": "Success"}), 201
+    return jsonify({"result": "Success"}), 201
 
 
 @app.route("/get-library", methods=["GET"])
