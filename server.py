@@ -1,5 +1,6 @@
 import flask
 from flask import jsonify
+from datetime import datetime
 import os
 from flask_jwt_extended import (
     JWTManager,
@@ -119,7 +120,7 @@ def find_song():
     song_name = song["name"]
     song_artist = song["artists"][0]["name"]
     album_name = song["album"]["name"]
-    release_date = song["album"]["release_date"][:4]
+    release_date = song["album"]["release_date"]
 
     return (
         jsonify(
@@ -148,13 +149,15 @@ def music_database():
     username = get_jwt_identity()
 
     # Query for person in database
-    person = Person.query.filter(Person.username == username)
+    person = Person.query.filter(Person.username == username).first()
 
     if not person:
         return jsonify({"result", "User not found"})
 
+    time_stamp = datetime.strptime(release_date, "%Y-%m-%d").date()
+
     # Create artist object using form data
-    liked_song = SongRecord(artist=artist, song=song, album=album, release_date=release_date, person_id=person.id)
+    liked_song = SongRecord(artist=artist, song=song, album=album, release_date=time_stamp, person_id=person.id)
 
     # Stage song
     db.session.add(liked_song)
