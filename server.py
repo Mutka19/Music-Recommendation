@@ -147,8 +147,14 @@ def music_database():
     # Get username from JWT
     username = get_jwt_identity()
 
+    # Query for person in database
+    person = Person.query.filter(Person.username == username)
+
+    if not person:
+        return jsonify({"result", "User not found"})
+
     # Create artist object using form data
-    liked_song = SongRecord(username=username, artist=artist, song=song)
+    liked_song = SongRecord(artist=artist, song=song, album=album, release_date=release_date, person_id=person.id)
 
     # Stage song
     db.session.add(liked_song)
