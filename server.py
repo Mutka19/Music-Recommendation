@@ -166,7 +166,27 @@ def music_database():
     # Commit song to database
     db.session.commit()
 
-    return jsonify({"result": "Success"}), 201
+    return jsonify({"result": "Music saved to database"}), 201
+
+
+@app.route("/delete-song", methods=["DELETE"])
+@jwt_required()
+def delete_song():
+    # Get data from request
+    data = flask.request.get_json()
+    song_id = data.get("songId")
+
+    # Query for song in database
+    try:
+        song_record = SongRecord.query.filter(SongRecord.id == song_id).first()
+    except Exception:
+        return jsonify({"Error": "Song not found"}), 404
+
+    # Delete song from database
+    db.session.delete(song_record)
+    db.session.commit()
+
+    return jsonify({"result": "Song deleted from library"}), 204
 
 
 @app.route("/get-library", methods=["GET"])
