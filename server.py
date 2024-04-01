@@ -147,10 +147,10 @@ def music_database():
     release_date = data.get("releaseDate")
 
     # Get username from JWT
-    username = get_jwt_identity()
+    person_id = get_jwt_identity()
 
     # Query for person in database
-    person = Person.query.filter(Person.username == username).first()
+    person = Person.query.filter(Person.id == person_id).first()
 
     if not person:
         return jsonify({"result", "User not found"})
