@@ -192,15 +192,22 @@ def delete_song():
 @app.route("/get-library", methods=["GET"])
 @jwt_required()
 def get_library():
+    # Get page being requested by front end
+    page = flask.request.args.get('page', 1, type=int)
     # Get user identity
-    username = get_jwt_identity()
+    person_id = get_jwt_identity()
 
     # Query for all songs that user has saved
-    songs = SongRecord.query.filter_by(username=username).all()
+    pagination = SongRecord.query.filter_by(person_id=person_id).paginate(page=page, per_page=5, error_out=False)
+    songs = pagination.items
+    print(pagination.total)
+    print(pagination.pages)
+
+    songs_json = [song.to_library_json() for song in songs]
 
     # If songs are found then return all songs
     if songs:
-        return jsonify({"songs": songs}), 200
+        return jsonify({"songs": songs_json}), 200
     else:
         return jsonify({"error": "No songs found"})
 
