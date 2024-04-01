@@ -1,6 +1,6 @@
 import flask
 from flask import jsonify
-from datetime import datetime
+from datetime import datetime, timedelta
 import os
 from flask_jwt_extended import (
     JWTManager,
@@ -38,8 +38,9 @@ def login():
     person = Person.query.filter_by(username=username).first()
     # Check if username and password match
     if person and person.check_password(password):
-        token = create_access_token(identity=username)
-        return flask.jsonify({"token": token}), 200
+        expires_in = timedelta(minutes=30)
+        token = create_access_token(identity=person.id, expires_delta=expires_in)
+        return flask.jsonify({"token": token, "expiration": int(expires_in.total_seconds())}), 200
     else:
         return flask.jsonify({"message": "Invalid username or password"}), 401
 
