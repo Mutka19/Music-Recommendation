@@ -54,6 +54,9 @@ def signup():
     username = data.get("username")
     password = data.get("password")
 
+    if len(username) < 1:
+        return jsonify({"message": "Username is required"}), 400
+
     # Query for persons with matching username
     person = Person.query.filter(Person.username == username).first()
 
@@ -69,12 +72,11 @@ def signup():
         db.session.add(person)
         db.session.commit()
 
-        return flask.jsonify({"message": "Signup Successful"}), 200
+        return jsonify({"message": "Signup Successful"}), 200
+    elif person:
+        return jsonify({"message": "Username already taken"}), 400
     else:
-        return (
-            flask.jsonify({"message": "Username is taken or password is too short"}),
-            401,
-        )
+        return jsonify({"message": "Password is too short"}), 400
 
 
 @app.route("/change-password", methods=["PUT"])
