@@ -38,7 +38,7 @@ def login():
     person = Person.query.filter_by(username=username).first()
     # Check if username and password match
     if person and person.check_password(password):
-        expires_in = timedelta(seconds=15)
+        expires_in = timedelta(minutes=30)
         token = create_access_token(identity=person.id, expires_delta=expires_in)
         return flask.jsonify({"token": token, "expiration": int(expires_in.total_seconds())}), 200
     else:
