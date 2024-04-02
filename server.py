@@ -49,13 +49,13 @@ def login():
 def signup():
     # Get data as JSON
     data = flask.request.get_json()
-    print(data)
+
     # Extract username and password from JSON
     username = data.get("username")
     password = data.get("password")
 
     # Query for persons with matching username
-    person = Person.query.filter_by(username=username).first()
+    person = Person.query.filter(username=username).first()
 
     # Check if username is in use and password is not null
     if not person and len(password) > 8:
@@ -86,8 +86,11 @@ def change_password():
     # Get JSON data
     data = flask.request.get_json()
 
-    # Query for user
-    person = Person.query.filter_by(Person.id == person_id).first()
+    try:
+        # Query for user
+        person = Person.query.filter(Person.id == person_id).first()
+    except Exception:
+        return jsonify({"message": "Could not find user in database"}), 404
 
     # Extract password and new password from data
     old_password = data.get("oldPassword")
@@ -96,11 +99,27 @@ def change_password():
     # Check if entered password matches old password
     if person.check_password(old_password) and len(new_password) > 8:
         person.set_password(new_password)
-        return jsonify({"result", "Password updated successfully"}), 201
+        db.session.commit()
+        return jsonify({"message": "Password updated successfully"}), 201
     elif len(new_password) < 8:
-        return jsonify({"result": "New password length too short"})
+        return jsonify({"message": "New password length too short"}), 400
     else:
-        return jsonify({"result", "Old password is incorrect"}), 401
+        return jsonify({"message": "Old password is incorrect"}), 401
+
+
+@app.route("/verify", methods=["GET"])
+@jwt_required()
+def verify():
+    # Get user identity
+    person_id = get_jwt_identity()
+
+    # Query for person in database
+    person = Person.query.filter(Person.id == person_id).first()
+
+    if not person:
+        return jsonify({"message": "Could not verify user"}), 404
+    else:
+        return jsonify({"message": "Verified"}), 200
 
 
 @app.route("/music-selection", methods=["GET", "POST"])
@@ -109,7 +128,7 @@ def find_song():
     data = flask.request.get_json()
 
     if not data:
-        return jsonify({"error": "No data provided"}), 400
+        return jsonify({"message": "No data provided"}), 400
 
     # Get data from JSON and if none is present set equal to empty string
     artist_string = data.get("artists", "")
@@ -128,7 +147,7 @@ def find_song():
     # Return error if too many arguments are used
     if len(artist_list) + len(genres_list) + len(track_list) > 5:
         return (
-            jsonify({"error": "Too many arguments, maximum number of arguments is 5"}),
+            jsonify({"message": "Too many arguments, maximum number of arguments is 5"}),
             400,
         )
 
@@ -141,7 +160,7 @@ def find_song():
             tracks=track_list,
         )["tracks"][0]
     except IndexError:
-        return jsonify({"error": "No tracks found"}), 404
+        return jsonify({"message": "No tracks found"}), 404
 
     # Extract song name from JSON response
     song_name = song["name"]
@@ -192,7 +211,7 @@ def music_database():
     # Commit song to database
     db.session.commit()
 
-    return jsonify({"result": "Music saved to database"}), 201
+    return jsonify({"message": "Music saved to database"}), 201
 
 
 @app.route("/delete-song", methods=["DELETE"])
@@ -212,7 +231,7 @@ def delete_song():
     db.session.delete(song_record)
     db.session.commit()
 
-    return jsonify({"result": "Song deleted from library"}), 204
+    return jsonify({"message": "Song deleted from library"}), 204
 
 
 @app.route("/get-library", methods=["POST"])
@@ -235,7 +254,7 @@ def get_library():
     if songs:
         return jsonify({"songs": songs_json, "pages": pagination.pages}), 200
     else:
-        return jsonify({"error": "No songs found"}), 404
+        return jsonify({"message": "No songs found"}), 404
 
 
-app.run(host="0.0.0.0", port=5000)
+app.run(host="0.0.0.0", port=5000, debug=True)
