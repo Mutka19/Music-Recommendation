@@ -55,7 +55,7 @@ def signup():
     password = data.get("password")
 
     # Query for persons with matching username
-    person = Person.query.filter(username=username).first()
+    person = Person.query.filter(Person.username == username).first()
 
     # Check if username is in use and password is not null
     if not person and len(password) > 8:
