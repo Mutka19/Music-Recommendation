@@ -38,7 +38,7 @@ def login():
     person = Person.query.filter_by(username=username).first()
     # Check if username and password match
     if person and person.check_password(password):
-        expires_in = timedelta(minutes=30)
+        expires_in = timedelta(seconds=15)
         token = create_access_token(identity=person.id, expires_delta=expires_in)
         return flask.jsonify({"token": token, "expiration": int(expires_in.total_seconds())}), 200
     else:
@@ -49,7 +49,7 @@ def login():
 def signup():
     # Get data as JSON
     data = flask.request.get_json()
-
+    print(data)
     # Extract username and password from JSON
     username = data.get("username")
     password = data.get("password")
@@ -75,6 +75,32 @@ def signup():
             flask.jsonify({"message": "Username is taken or password is too short"}),
             401,
         )
+
+
+@app.route("/change-password", methods=["PUT"])
+@jwt_required()
+def change_password():
+    # Get user identity
+    person_id = get_jwt_identity()
+
+    # Get JSON data
+    data = flask.request.get_json()
+
+    # Query for user
+    person = Person.query.filter_by(Person.id == person_id).first()
+
+    # Extract password and new password from data
+    old_password = data.get("oldPassword")
+    new_password = data.get("newPassword")
+
+    # Check if entered password matches old password
+    if person.check_password(old_password) and len(new_password) > 8:
+        person.set_password(new_password)
+        return jsonify({"result", "Password updated successfully"}), 201
+    elif len(new_password) < 8:
+        return jsonify({"result": "New password length too short"})
+    else:
+        return jsonify({"result", "Old password is incorrect"}), 401
 
 
 @app.route("/music-selection", methods=["GET", "POST"])
@@ -155,7 +181,7 @@ def music_database():
     if not person:
         return jsonify({"result", "User not found"})
 
-    time_stamp = datetime.strptime(release_date, "%Y-%m-%d").date()
+    time_stamp = datetime.strptime(release_date[:4], "%Y").date()
 
     # Create artist object using form data
     liked_song = SongRecord(artist=artist, song=song, album=album, release_date=time_stamp, person_id=person.id)
@@ -189,27 +215,27 @@ def delete_song():
     return jsonify({"result": "Song deleted from library"}), 204
 
 
-@app.route("/get-library", methods=["GET"])
+@app.route("/get-library", methods=["POST"])
 @jwt_required()
 def get_library():
-    # Get page being requested by front end
-    page = flask.request.args.get('page', 1, type=int)
     # Get user identity
     person_id = get_jwt_identity()
+
+    # Get page being requested by front end
+    data = flask.request.get_json()
+    page = data.get("page")
 
     # Query for all songs that user has saved
     pagination = SongRecord.query.filter_by(person_id=person_id).paginate(page=page, per_page=5, error_out=False)
     songs = pagination.items
-    print(pagination.total)
-    print(pagination.pages)
 
     songs_json = [song.to_library_json() for song in songs]
 
     # If songs are found then return all songs
     if songs:
-        return jsonify({"songs": songs_json}), 200
+        return jsonify({"songs": songs_json, "pages": pagination.pages}), 200
     else:
-        return jsonify({"error": "No songs found"})
+        return jsonify({"error": "No songs found"}), 404
 
 
 app.run(host="0.0.0.0", port=5000)
