@@ -21,9 +21,6 @@ app.config["JWT_SECRET_KEY"] = os.getenv("SECRET_KEY")
 db.init_app(app)
 jwt = JWTManager(app)
 
-# with app.app_context():
-#     db.create_all()
-
 
 @app.route("/login", methods=["POST"])
 def login():
