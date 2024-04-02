@@ -1,6 +1,17 @@
+# Environment
 .env
-#DS_Store
+env.list
+
+# Docker
+dockerfile
+
+# DS_Store
 .DS_Store
+
+# venv
 venv
+
+# IDE
 .vscode
 .idea
+__pycache__
